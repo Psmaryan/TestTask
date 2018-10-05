@@ -1,0 +1,152 @@
+﻿@{
+    ViewBag.Title = "Search";
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <style>
+        .result {
+            font-size: 20px
+        }
+
+        .oldSentence {
+            font-size: 15px; 
+          
+        }
+
+    </style>
+    <meta name="viewport" content="width=device-width" />
+</head>
+
+<body style="background-color:powderblue">
+    
+   <div style="border:3px">
+       <br/>
+        <label for="file" style="font-size: 20px">Choose file </label>
+        <input type="file" name="fileText" id="uploadFile" accept=".txt"/>
+
+        <br /><br />
+
+        <input type="search" id="search" placeholder="Search word..." required />
+        <input type="submit" value="Enter" id="submit">
+        <br/><br/>
+
+        <div id="result"class="result"></div>
+
+        <br/><br/>
+
+            <div style="font-style:italic; font-size: 25px; color:olivedrab">Old sentences</div>
+        <div style="padding:15px; border: 4px double black">
+            <div data-item="empty" id="oldSentence" class="oldSentence"><div style="color:firebrick">Loading...<br/></div></div>
+        </div>
+    </div>
+
+    @section scripts{
+        <script type="text/javascript">
+
+
+            $(function () {
+
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("UploadElements", "Home")',
+                    contentType: false,
+                    processData: false,
+                    success: function (result) {
+                       
+                        if (result.length === 0) {
+                            $('#oldSentence').html("<b style=\"font-size: 30px; color: darkred\">No sentences</b>");
+                        }
+                        else {
+                            var list = result.map(function (name) {
+                                return "<p>" + name.Text + "</p>";
+                            })
+
+                            $('#oldSentence').html(list);
+                        }
+                    },
+                    error: function (xhr, status, p3) {
+                        alert("Failed to load data!");
+                    }
+                });
+            })
+
+
+
+
+    $('#submit').on('click', function (e) {
+        e.preventDefault();
+        var files = document.getElementById('uploadFile').files;
+        if (files.length > 0) {
+            if (window.FormData !== undefined) {
+                var data = new FormData();
+
+                data.append("file", files[0]);
+                data.append("searchResalt", $('#search').val());               
+
+                var searchText;
+
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("Upload", "Home")',
+                    contentType: false,
+                    processData: false,
+                    data: data,
+                    beforeSend: function (jqXHR, settings) {
+
+                        searchText = $('#search').val();
+                        return true;
+                    },
+                    success: function (result) {
+
+                        
+
+
+                        var list = result.map(function (name) {
+
+                            return "<p><b> Count: " + name.Count + " </b> " + name.Text + "</p>";
+
+                        })
+                        var list2 = result.map(function (name) {
+
+                            return  "<p> " + name.Text + "</p>";
+
+                        })
+
+                        if (result.length === 0) {
+                            $('#result').html("<b style=\"font-size: 30px; color: darkred\">Nothing was found</b>");
+                        }
+                        else {
+                            $('#result').html("<div style=\"font-style: italic; font-size: 25px; color: olivedrab\">" + searchText + ": </div>");
+                            $('#result').append(list);
+
+                            if ($('#oldSentence').data('item') != "empty") {
+                                $('#oldSentence').prepend(list2);
+                            }
+                            else {
+                                $('#oldSentence').html(list2);
+                            }
+                        }
+                    },
+                    error: function (xhr, status, p3) {
+                        alert("Failed to load data!");
+                    }
+                });
+            } else {
+                alert("The browser does not support downloading HTML5 files!");
+            }
+        }
+        else {
+            alert("Choose file, please!")
+        }
+
+
+    });
+        </script>
+    }
+
+
+</body>
+</html>
